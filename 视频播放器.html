@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多媒体播放器</title>
+    <style>
+        body {
+            background: #f5f5f5;
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            margin-right: 10px;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #e9e9e9;
+        }
+
+        .content {
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        .file-input {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .custom-file-upload:hover {
+            background: #45a049;
+        }
+
+        video, audio {
+            width: 100%;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: #000;
+        }
+
+        img {
+            max-width: 100%;
+            max-height: 500px;
+            display: block;
+            margin: 0 auto;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .selected-file {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .github-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #333;
+            color: white;
+            border-radius: 25px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .github-button:hover {
+            background: #555;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">多媒体播放器</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="video">视频</div>
+            <div class="tab" data-tab="audio">音频</div>
+            <div class="tab" data-tab="image">图片</div>
+        </div>
+
+        <div class="content active" id="video-content">
+            <div class="file-input">
+                <label for="videoFile" class="custom-file-upload">选择视频文件</label>
+                <input type="file" id="videoFile" accept="video/*">
+                <div class="selected-file" id="videoFileName"></div>
+            </div>
+            <video id="videoPlayer" controls>
+                您的浏览器不支持 video 标签。
+            </video>
+        </div>
+
+        <div class="content" id="audio-content">
+            <div class="file-input">
+                <label for="audioFile" class="custom-file-upload">选择音频文件</label>
+                <input type="file" id="audioFile" accept="audio/*">
+                <div class="selected-file" id="audioFileName"></div>
+            </div>
+            <audio id="audioPlayer" controls>
+                您的浏览器不支持 audio 标签。
+            </audio>
+        </div>
+
+        <div class="content" id="image-content">
+            <div class="file-input">
+                <label for="imageFile" class="custom-file-upload">选择图片文件</label>
+                <input type="file" id="imageFile" accept="image/*">
+                <div class="selected-file" id="imageFileName"></div>
+            </div>
+            <img id="imageViewer" style="display: none;">
+        </div>
+    </div>
+
+    <a href="https://github.com/WeiZiHan-Chinese/video" target="_blank" class="github-button">
+        访问 GitHub作者首页
+    </a>
+
+    <script>
+        // 标签切换功能
+        const tabs = document.querySelectorAll('.tab');
+        const contents = document.querySelectorAll('.content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 移除所有活动状态
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                
+                // 添加当前活动状态
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+            });
+        });
+
+        // 文件处理功能
+        function handleFile(inputId, playerId, fileNameId, type) {
+            const input = document.getElementById(inputId);
+            const player = document.getElementById(playerId);
+            const fileNameDisplay = document.getElementById(fileNameId);
+
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const fileURL = URL.createObjectURL(file);
+                    if (type === 'image') {
+                        player.style.display = 'block';
+                        player.src = fileURL;
+                    } else {
+                        player.src = fileURL;
+                    }
+                    fileNameDisplay.textContent = '已选择: ' + file.name;
+                }
+            });
+        }
+
+        // 初始化所有文件处理器
+        handleFile('videoFile', 'videoPlayer', 'videoFileName', 'video');
+        handleFile('audioFile', 'audioPlayer', 'audioFileName', 'audio');
+        handleFile('imageFile', 'imageViewer', 'imageFileName', 'image');
+    </script>
+</body>
+</html>
